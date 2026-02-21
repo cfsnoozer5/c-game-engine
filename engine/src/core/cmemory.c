@@ -1,6 +1,7 @@
 #include "cmemory.h"
 
 #include "core/logger.h"
+#include "core/cstring.h"
 #include "platform/platform.h"
 
 #include <stdio.h>
@@ -108,6 +109,6 @@ char* get_memory_usage_str() {
     }
 
     // NOTE: BE CAREFUL THIS WILL NEED TO BE FREED
-    char* out_string = _strdup(buffer);
+    char* out_string = string_duplicate(buffer);
     return out_string;
 }
