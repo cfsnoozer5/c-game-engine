@@ -13,3 +13,7 @@ char* string_duplicate(const char* str) {
     ccopy_memory(copy, str, length + 1);
     return copy;
 }
+
+b8 strings_euqal(const char* str0, const char* str1) {
+    return strcmp(str0, str1);
+}
