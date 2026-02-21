@@ -71,7 +71,7 @@ void input_process_button(buttons button, b8 pressed) {
 void input_process_mouse_move(i16 x, i16 y) {
     // Only handle this if the state actually changed.
     if (state.mouse_current.x != x || state.mouse_current.y != y) {
-        CDEBUG("Mouse pos: %i, %i", x, y);
+        // CDEBUG("Mouse pos: %i, %i", x, y);
 
         // Update internal state.
         state.mouse_current.x = x;
