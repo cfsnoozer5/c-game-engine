@@ -6,6 +6,7 @@
 #include "platform/platform.h"
 #include "core/cmemory.h"
 #include "core/event.h"
+#include "core/input.h"
 
 typedef struct application_state {
     game* game_inst;
@@ -30,6 +31,7 @@ b8 application_create(game* game_inst) {
 
     // Initialize subsystems
     intialize_logging();
+    input_initialize();
 
     // TODO: Remove this
     CFATAL("A test message: %f", 3.14f);
@@ -89,12 +91,15 @@ b8 application_run() {
                 app_state.is_running = FALSE;
                 break;
             }
+
+            input_update(0);
         }
     }
 
     app_state.is_running = FALSE;
 
     event_shutdown();
+    input_shutdown();
 
     platform_shutdown(&app_state.platform);
 
