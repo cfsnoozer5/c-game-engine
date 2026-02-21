@@ -22,7 +22,7 @@ typedef enum log_level {
 } log_level;
 
 b8 intialize_logging();
-void shutdown();
+void shutdown_logging();
 
 // Log at any level like printf
 CAPI void log_output(log_level level, const char* message, ...);
