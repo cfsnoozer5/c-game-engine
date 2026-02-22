@@ -70,7 +70,6 @@ void vulkan_swapchain_present(
     present_info.swapchainCount = 1;
     present_info.pSwapchains = &swapchain->handle;
     present_info.pImageIndices = &present_image_index;
-    present_info.pResults = 0;
 
     VkResult result = vkQueuePresentKHR(present_queue, &present_info);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
@@ -80,7 +79,7 @@ void vulkan_swapchain_present(
     }
 
     // Increment (and loop) the index
-    context->current_frame = (context->current_frame + 1) & swapchain->max_frames_in_flight;
+    context->current_frame = (context->current_frame + 1) % swapchain->max_frames_in_flight;
 }
 
 void create(vulkan_context* context, u32 width, u32 height, vulkan_swapchain* swapchain) {

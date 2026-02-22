@@ -444,6 +444,10 @@ b8 vulkan_renderer_backend_end_frame(struct renderer_backend* backend, f32 delta
         context.queue_complete_semaphores[context.current_frame],
         context.image_index);
 
+    
+    vkQueueWaitIdle(context.device.present_queue);
+    vkDeviceWaitIdle(context.device.logical_device);
+
     return TRUE;
 }
 
