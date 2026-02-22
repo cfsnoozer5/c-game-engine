@@ -1,6 +1,7 @@
 #include "vulkan_backend.h"
 #include "vulkan_types.inl"
 #include "vulkan_platform.h"
+#include "vulkan_device.h"
 
 #include "core/logger.h"
 #include "core/cstring.h"
@@ -69,7 +70,7 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
         CINFO("Searing for layer: %s...", required_validation_layer_names[i]);
         b8 found = FALSE;
         for (u32 j = 0; j < available_layer_count; j++) {
-            if (strings_euqal(required_validation_layer_names[i], available_layers[i].layerName)) {
+            if (strings_equal(required_validation_layer_names[i], available_layers[i].layerName)) {
                 found = TRUE;
                 CINFO("Found.");
                 break;
@@ -111,6 +112,20 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
     VK_CHECK(func(context.instance, &debug_create_info, context.allocator, &context.debug_messenger));
     CDEBUG("Vulkan debugger created.");
 #endif
+    
+    // Surface creation
+    CDEBUG("Creating Vulkan surface...");
+    if (!platform_create_vulkan_surface(plat_state, &context)) {
+        CERROR("Failed to create platform surface!");
+        return FALSE;
+    }
+    CDEBUG("Created Vulkan surface");
+
+    // Device creation
+    if (!vulkan_device_create(&context)) {
+        CERROR("Failed to create device!");
+        return FALSE;
+    }
 
     CINFO("Vulkan renderer initialized succesfully.");
     return TRUE;
