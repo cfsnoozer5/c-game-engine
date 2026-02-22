@@ -2,6 +2,7 @@
 #include "vulkan_types.inl"
 #include "vulkan_platform.h"
 #include "vulkan_device.h"
+#include "vulkan_swapchain.h"
 
 #include "core/logger.h"
 #include "core/cstring.h"
@@ -19,7 +20,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
     void* user_data);
 
+i32 find_memory_index(u32 type_filter, u32 property_flags);
+
 b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const char* application_name, struct platform_state* plat_state) {
+    context.find_memory_index = find_memory_index;
+    
     context.allocator = 0;
 
     VkApplicationInfo app_info = {VK_STRUCTURE_TYPE_APPLICATION_INFO};
@@ -112,7 +117,7 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
     VK_CHECK(func(context.instance, &debug_create_info, context.allocator, &context.debug_messenger));
     CDEBUG("Vulkan debugger created.");
 #endif
-    
+
     // Surface creation
     CDEBUG("Creating Vulkan surface...");
     if (!platform_create_vulkan_surface(plat_state, &context)) {
@@ -127,11 +132,35 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
         return FALSE;
     }
 
+    // Swapchain
+    vulkan_swapchain_create(
+        &context,
+        context.framebuffer_width,
+        context.framebuffer_height,
+        &context.swapchain);
+
+    CDEBUG("Vulkan swapchain created!");
+
     CINFO("Vulkan renderer initialized succesfully.");
     return TRUE;
 }
 
 void vulkan_renderer_backend_shutdown(struct renderer_backend* backend) {
+    // Swapchain
+    vulkan_swapchain_destroy(&context, &context.swapchain);
+
+    // Device
+    CDEBUG("Destorying Vulkan device...");
+    vulkan_device_destroy(&context);
+
+    // Surface
+    CDEBUG("Destroying Vulkan surface...");
+    if (context.surface) {
+        vkDestroySurfaceKHR(context.instance, context.surface, context.allocator);
+        context.surface = 0;
+    }
+
+    // Debugger
 #if defined(_DEBUG)
     CDEBUG("Destroying Vulkan debugger...");
     if (context.debug_messenger) {
@@ -140,6 +169,7 @@ void vulkan_renderer_backend_shutdown(struct renderer_backend* backend) {
     }
 #endif
 
+    // Instance
     CDEBUG("Destroying Vulkan instance...");
     vkDestroyInstance(context.instance, context.allocator);
 }
@@ -176,4 +206,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     }
 
     return VK_FALSE;
+}
+
+i32 find_memory_index(u32 type_filter, u32 property_flags) {
+    VkPhysicalDeviceMemoryProperties memory_properties;
+    vkGetPhysicalDeviceMemoryProperties(context.device.physical_device, &memory_properties);
+
+    for (u32 i = 0; i < memory_properties.memoryTypeCount; i++) {
+        // Check each memory type
+        if (type_filter & (1 << i) && (memory_properties.memoryTypes[i].propertyFlags & property_flags) == property_flags) {
+            return i;
+        }
+    }
+
+    CWARN("Unable to find suitable memory type!");
+    return -1;
 }

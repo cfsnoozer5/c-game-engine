@@ -303,9 +303,9 @@ void vulkan_device_query_swapchain_support(
         &out_support_info->present_mode_count,
         0));
 
-    if (out_support_info->format_count != 0) {
-        if (!out_support_info->formats) {
-            out_support_info->formats = callocate(sizeof(VkPresentModeKHR) * out_support_info->present_mode_count, MEMORY_TAG_RENDERER);
+    if (out_support_info->present_mode_count != 0) {
+        if (!out_support_info->present_modes) {
+            out_support_info->present_modes = callocate(sizeof(VkPresentModeKHR) * out_support_info->present_mode_count, MEMORY_TAG_RENDERER);
         }
         VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(
             physical_device,
@@ -313,6 +313,33 @@ void vulkan_device_query_swapchain_support(
             &out_support_info->present_mode_count,
             out_support_info->present_modes));
     }
+}
+
+b8 vulkan_device_detect_depth_format(vulkan_device* device) {
+    // Format canidates
+    const u64 canidate_count = 3;
+    VkFormat canidates[3] = {
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+    };
+    
+    u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    for (int i = 0; i < canidate_count; i++) {
+        VkFormatProperties properties;
+        vkGetPhysicalDeviceFormatProperties(device->physical_device, canidates[i], &properties);
+
+        if ((properties.linearTilingFeatures & flags) == flags) {
+            device->depth_format = canidates[i];
+            return TRUE;
+        } else if ((properties.optimalTilingFeatures & flags) == flags) {
+            device->depth_format = canidates[i];
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 b8 physical_device_meets_requirements(
