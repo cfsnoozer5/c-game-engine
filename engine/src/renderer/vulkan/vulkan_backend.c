@@ -38,7 +38,7 @@ void create_command_buffers(renderer_backend* backend);
 void regenerate_framebuffers(renderer_backend* backend, vulkan_swapchain* swapchain, vulkan_renderpass* renderpass);
 b8 recreate_swapchain(renderer_backend* backend);
 
-b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const char* application_name, struct platform_state* plat_state) {
+b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const char* application_name) {
     context.find_memory_index = find_memory_index;
 
     context.allocator = 0;
@@ -95,10 +95,10 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
 
     for (u32 i = 0; i < required_validation_layer_count; i++) {
         CINFO("Searing for layer: %s...", required_validation_layer_names[i]);
-        b8 found = FALSE;
+        b8 found = false;
         for (u32 j = 0; j < available_layer_count; j++) {
-            if (strings_equal(required_validation_layer_names[i], available_layers[i].layerName)) {
-                found = TRUE;
+            if (strings_equal(required_validation_layer_names[i], available_layers[j].layerName)) {
+                found = true;
                 CINFO("Found.");
                 break;
             }
@@ -106,11 +106,10 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
 
         if (!found) {
             CFATAL("Required validation layer is missing: %s", required_validation_layer_names[i]);
-            return FALSE;
+            return false;
         }
-
-        CINFO("All required validation layers are present.");
     }
+    CINFO("All required validation layers are present.");
 #endif
 
     create_info.enabledLayerCount = required_validation_layer_count;
@@ -119,7 +118,7 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
     VkResult result = vkCreateInstance(&create_info, context.allocator, &context.instance);
     if (result != VK_SUCCESS) {
         CERROR("vkCreateInstance failed with result: %u", result);
-        return FALSE;
+        return false;
     }
     CINFO("Vulkan Instance created.");
 
@@ -134,7 +133,8 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
     debug_create_info.pfnUserCallback = vk_debug_callback;
     debug_create_info.pUserData = 0;
 
-    PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance, "vkCreateDebugUtilsMessengerEXT");
+    PFN_vkCreateDebugUtilsMessengerEXT func = 
+        (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance, "vkCreateDebugUtilsMessengerEXT");
     CASSERT_MSG(func, "Failed to create debug messenger!");
     VK_CHECK(func(context.instance, &debug_create_info, context.allocator, &context.debug_messenger));
     CDEBUG("Vulkan debugger created.");
@@ -142,16 +142,16 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
 
     // Surface creation
     CDEBUG("Creating Vulkan surface...");
-    if (!platform_create_vulkan_surface(plat_state, &context)) {
+    if (!platform_create_vulkan_surface(&context)) {
         CERROR("Failed to create platform surface!");
-        return FALSE;
+        return false;
     }
     CDEBUG("Created Vulkan surface");
 
     // Device creation
     if (!vulkan_device_create(&context)) {
         CERROR("Failed to create device!");
-        return FALSE;
+        return false;
     }
 
     // Swapchain
@@ -192,7 +192,7 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
 
         // Create the fence in a signaled state, indicating that the first frame has already been "rendered"
         // Prevens waiting indefinitely for first frame render
-        vulkan_fence_create(&context, TRUE, &context.in_flight_fences[i]);
+        vulkan_fence_create(&context, true, &context.in_flight_fences[i]);
     }
 
     // In flight fences should not exist yet, so clear the list. These are stored in pointers
@@ -204,7 +204,7 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
     }
 
     CINFO("Vulkan renderer initialized succesfully.");
-    return TRUE;
+    return true;
 }
 
 void vulkan_renderer_backend_shutdown(struct renderer_backend* backend) {
@@ -279,7 +279,8 @@ void vulkan_renderer_backend_shutdown(struct renderer_backend* backend) {
 #if defined(_DEBUG)
     CDEBUG("Destroying Vulkan debugger...");
     if (context.debug_messenger) {
-        PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance, "vkDestroyDebugUtilsMessengerEXT");
+        PFN_vkDestroyDebugUtilsMessengerEXT func =
+             (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance, "vkDestroyDebugUtilsMessengerEXT");
         func(context.instance, context.debug_messenger, context.allocator);
     }
 #endif
@@ -304,26 +305,26 @@ b8 vulkan_renderer_backend_begin_frame(struct renderer_backend* backend, f32 del
     if (context.recreating_swapchain) {
         VkResult result = vkDeviceWaitIdle(device->logical_device);
         if (!vulkan_result_is_success(result)) {
-            CERROR("vulkan_rederer_backend_begin_frame vkDeviceWaitIdle (1) failed: '$s'", vulkan_result_string(result, TRUE));
-            return FALSE;
+            CERROR("vulkan_rederer_backend_begin_frame vkDeviceWaitIdle (1) failed: '%s'", vulkan_result_string(result, true));
+            return false;
         }
         CINFO("Recreating swapchina, bootin.");
-        return FALSE;
+        return false;
     }
 
     // Check if framebuffer has been resized
     if (context.framebuffer_size_generation != context.framebuffer_size_last_generation) {
         VkResult result = vkDeviceWaitIdle(device->logical_device);
         if (!vulkan_result_is_success(result)) {
-            CERROR("vulkan_rederer_backend_begin_frame vkDeviceWaitIdle (2) failed: '$s'", vulkan_result_string(result, TRUE));
-            return FALSE;
+            CERROR("vulkan_rederer_backend_begin_frame vkDeviceWaitIdle (2) failed: '%s'", vulkan_result_string(result, true));
+            return false;
         }
         // If the swapchain recreation failed boot out before usetting the flag.
         if (!recreate_swapchain(backend)) {
-            return FALSE;
+            return false;
         }
         CINFO("Resized, booting.");
-        return FALSE;
+        return false;
     }
 
     // UINT64_MAX
@@ -333,7 +334,7 @@ b8 vulkan_renderer_backend_begin_frame(struct renderer_backend* backend, f32 del
             &context.in_flight_fences[context.current_frame],
             0xffffffffffffffff)) {
         CWARN("In-flight fence wait failure!");
-        return FALSE;
+        return false;
     }
 
     // Acquie the next image from the swap chain
@@ -344,17 +345,17 @@ b8 vulkan_renderer_backend_begin_frame(struct renderer_backend* backend, f32 del
             context.image_available_semaphores[context.current_frame],
             0,
             &context.image_index)) {
-        return FALSE;
+        return false;
     }
 
     // Begin recording commands
     vulkan_command_buffer* command_buffer = &context.graphics_command_buffers[context.image_index];
     vulkan_command_buffer_reset(command_buffer);
-    vulkan_command_buffer_begin(command_buffer, FALSE, FALSE, FALSE);
+    vulkan_command_buffer_begin(command_buffer, false, false, false);
 
     // Dynamic state
     VkViewport viewport;
-    viewport.x = 0.0;
+    viewport.x = 0.0f;
     viewport.y = (f32)context.framebuffer_height;
     viewport.width = (f32)context.framebuffer_width;
     viewport.height = -(f32)context.framebuffer_height;
@@ -379,7 +380,7 @@ b8 vulkan_renderer_backend_begin_frame(struct renderer_backend* backend, f32 del
         &context.main_renderpass,
         context.swapchain.framebuffers[context.image_index].handle);
 
-    return TRUE;
+    return true;
 }
 
 b8 vulkan_renderer_backend_end_frame(struct renderer_backend* backend, f32 delta_time) {
@@ -429,7 +430,8 @@ b8 vulkan_renderer_backend_end_frame(struct renderer_backend* backend, f32 delta
         context.in_flight_fences[context.current_frame].handle);
 
     if (result != VK_SUCCESS) {
-        CERROR("vkQueueSubmit failed with result '%s'", vulkan_result_string(result, TRUE));
+        CERROR("vkQueueSubmit failed with result '%s'", vulkan_result_string(result, true));
+        return false;
     }
 
     vulkan_command_buffer_update_submitted(command_buffer);
@@ -448,7 +450,7 @@ b8 vulkan_renderer_backend_end_frame(struct renderer_backend* backend, f32 delta
     vkQueueWaitIdle(context.device.present_queue);
     vkDeviceWaitIdle(context.device.logical_device);
 
-    return TRUE;
+    return true;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
@@ -509,7 +511,7 @@ void create_command_buffers(renderer_backend* backend) {
         vulkan_command_buffer_allocate(
             &context,
             context.device.graphics_command_pool,
-            TRUE,
+            true,
             &context.graphics_command_buffers[i]);
     }
 }
@@ -535,15 +537,15 @@ void regenerate_framebuffers(renderer_backend* backend, vulkan_swapchain* swapch
 b8 recreate_swapchain(renderer_backend* backend) {
     if (context.recreating_swapchain) {
         CDEBUG("recreate_swapchain called when already recreating. Booting.");
-        return FALSE;
+        return false;
     }
 
     if (context.framebuffer_height == 0 || context.framebuffer_width == 0) {
         CDEBUG("recreate_swapchain called when window is < 1 in a dimension. Booting.");
-        return FALSE;
+        return false;
     }
 
-    context.recreating_swapchain = TRUE;
+    context.recreating_swapchain = true;
 
     vkDeviceWaitIdle(context.device.logical_device);
 
@@ -595,7 +597,7 @@ b8 recreate_swapchain(renderer_backend* backend) {
     create_command_buffers(backend);
 
     // Clear the recreating flag.
-    context.recreating_swapchain = FALSE;
+    context.recreating_swapchain = false;
 
-    return TRUE;
+    return true;
 }

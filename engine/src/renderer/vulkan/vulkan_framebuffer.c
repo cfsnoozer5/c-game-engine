@@ -12,7 +12,7 @@ void vulkan_framebuffer_create(
     vulkan_framebuffer* out_framebuffer) {
     
     out_framebuffer->attachments = callocate(sizeof(VkImageView) * attachment_count, MEMORY_TAG_RENDERER);
-    for (u32 i = 0; i <attachment_count; i++) {
+    for (u32 i = 0; i < attachment_count; i++) {
         out_framebuffer->attachments[i] = attachments[i];
     }
     out_framebuffer->renderpass = renderpass;

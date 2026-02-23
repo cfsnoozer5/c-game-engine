@@ -24,12 +24,12 @@ typedef struct event_context {
 // Shouyld return true if handled.
 typedef b8 (*PFN_on_event)(u16 code, void* sender, void* listener_inst, event_context data);
 
-b8 event_initialize();
-void event_shutdown();
+void intialize_event_system(u64* memory_requirement, void* state);
+void shutdown_event_system(void* state);
 
 /**
  * Register to listen for when events are sent with the provided code. Events with duplicate
- * listender/callback combos will not be registered again and will cause this to return FALSE.
+ * listender/callback combos will not be registered again and will cause this to return false.
  * @param code The event code to listen for.
  * @param listener A pointer to a listener instance. Can be 0/NULL.
  * @param on_event The callback function pointer to be invoked when the event code is fired.
@@ -39,7 +39,7 @@ CAPI b8 event_register(u16 code, void* listener, PFN_on_event on_event);
 
 /**
  * Unregister from listening for when events are sent with the provided code. If no matching
- * registration is found this function returns FALSE.
+ * registration is found this function returns false.
  * @param code The event code to listen for.
  * @param listener A pointer to a listener instance. Can be 0/NULL.
  * @param on_event The callback function pointer to be invoked when the event code is fired.

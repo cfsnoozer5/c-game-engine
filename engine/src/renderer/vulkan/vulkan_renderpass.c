@@ -26,7 +26,7 @@ void vulkan_renderpass_create(
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-    u32 attachment_description_count = 2;
+    const u32 attachment_description_count = 2;
     VkAttachmentDescription attachment_descriptions[attachment_description_count];
 
     // Color attachment
@@ -83,14 +83,14 @@ void vulkan_renderpass_create(
     subpass.preserveAttachmentCount = 0;
     subpass.pPreserveAttachments = 0;
 
-    VkSubpassDependency depednecy;
-    depednecy.srcSubpass = VK_SUBPASS_EXTERNAL;
-    depednecy.dstSubpass = 0;
-    depednecy.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    depednecy.srcAccessMask = 0;
-    depednecy.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    depednecy.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    depednecy.dependencyFlags = 0;
+    VkSubpassDependency dependency;
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency.dependencyFlags = 0;
 
     VkRenderPassCreateInfo create_info = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
     create_info.attachmentCount = attachment_description_count;
@@ -98,7 +98,7 @@ void vulkan_renderpass_create(
     create_info.subpassCount = 1;
     create_info.pSubpasses = &subpass;
     create_info.dependencyCount = 1;
-    create_info.pDependencies = &depednecy;
+    create_info.pDependencies = &dependency;
     create_info.pNext = 0;
     create_info.flags = 0;
 

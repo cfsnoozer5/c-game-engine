@@ -3,10 +3,9 @@
 #include "renderer_types.inl"
 
 struct static_mesh_data;
-struct platform_state;
 
-b8 renderer_initialize(const char* application_name, struct platform_state* plat_state);
-void renderer_shutdown();
+b8 initialize_renderer(u64* memory_requirement, void* state, const char* application_name);
+void shutdown_renderer();
 
 void renderer_on_resized(u16 width, u16 height);
 

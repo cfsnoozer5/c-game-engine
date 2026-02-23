@@ -12,10 +12,7 @@ extern b8 create_game(game* out_game);
  * The main entry point of the application.
  */
 int main() {
-    
-    intialize_memory();
-
-    game game_inst;
+    game game_inst = {};
     if (!create_game(&game_inst)) {
         CFATAL("Could not create game!");
         return -1;
@@ -37,8 +34,6 @@ int main() {
         CINFO("Application did not shutdown gracefully");
         return 2;
     }
-
-    shutdown_memory();
 
     return 0;
 }
