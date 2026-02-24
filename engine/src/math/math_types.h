@@ -53,3 +53,7 @@ typedef vec4 quat; // Quaternion rotational data
 typedef union mat4_u {
     f32 data[16];
 } mat4;
+
+typedef struct vertex_3d {
+    vec3 position;
+} vertex_3d;

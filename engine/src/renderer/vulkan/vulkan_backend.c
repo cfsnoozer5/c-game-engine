@@ -219,6 +219,8 @@ b8 vulkan_renderer_backend_initialize(struct renderer_backend* backend, const ch
 void vulkan_renderer_backend_shutdown(struct renderer_backend* backend) {
     vkDeviceWaitIdle(context.device.logical_device);
 
+    vulkan_object_shader_destroy(&context, &context.object_shader);
+
     // Sync objects
     for (u8 i = 0; i < context.swapchain.max_frames_in_flight; i++) {
         if (context.image_available_semaphores[i]) {
@@ -303,8 +305,6 @@ void vulkan_renderer_backend_on_resized(struct renderer_backend* backend, u16 wi
     cached_framebuffer_width = width;
     cached_framebuffer_height = height;
     context.framebuffer_size_generation++;
-
-    CINFO("Vulkan renderer backend->resized: w/h/gen: %i/%i/%llu", width, height, context.framebuffer_size_generation);
 }
 
 b8 vulkan_renderer_backend_begin_frame(struct renderer_backend* backend, f32 delta_time) {
